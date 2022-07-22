@@ -82,6 +82,12 @@ It is a good practice to provide appropriate feedback to the users waiting for t
 
 
 
+# How WebSocket works ?
+
+WebSockets provide a persistent connection between a client and server that both parties can use to start sending data at any time. The client establishes a WebSocket connection through a process known as the WebSocket handshake. This process starts with the client sending a regular HTTP request to the server.
+
+
+
 
 
 
