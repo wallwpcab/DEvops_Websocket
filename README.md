@@ -87,6 +87,31 @@ It is a good practice to provide appropriate feedback to the users waiting for t
 WebSockets provide a persistent connection between a client and server that both parties can use to start sending data at any time. The client establishes a WebSocket connection through a process known as the WebSocket handshake. This process starts with the client sending a regular HTTP request to the server.
 
 
+Once a connection has been established between the client and the server, the open event is fired from Web Socket instance. It is called as the initial handshake between client and server.
+
+The event, which is raised once the connection is established, is called the onopen. Creating Web Socket connections is really simple. All you have to do is call the WebSocket constructor and pass in the URL of your server.
+
+The following code is used to create a Web Socket connection −
+
+// Create a new WebSocket.
+var socket = new WebSocket('ws://echo.websocket.org');
+
+Once the connection has been established, the open event will be fired on your Web Socket instance.
+
+onopen refers to the initial handshake between client and the server which has lead to the first deal and the web application is ready to transmit the data.
+
+The following code snippet describes opening the connection of Web Socket protocol −
+
+socket.onopen = function(event) {
+   console.log(“Connection established”);
+   // Display user friendly messages for the successful establishment of connection
+   var.label = document.getElementById(“status”);
+   label.innerHTML = ”Connection established”;
+}
+
+It is a good practice to provide appropriate feedback to the users waiting for the Web Socket connection to be established. However, it is always noted that Web Socket connections are comparatively fast.
+
+
 
 
 
