@@ -1,0 +1,64 @@
+
+Christian Elsen
+
+Technology Generalist
+
+    San Francisco, CA
+    Website
+    Twitter
+    LinkedIn
+    GitHub
+    AS213151
+
+Measuring Network Throughput
+
+June 7, 2013 19 minute read #Network, #Performance
+On this page
+
+    Sliding window protocols
+    Bandwidth-delay Product and buffer size
+    Limit of TCP Windows field in the protocol header
+    Hands-On Tests
+        Real “bandwidth” tests
+    Time to bring out the big guns: UDP
+        UDP Test
+        TCP Test
+    Solutions to improve throughput
+        WAN Optimization Controller
+        Content Distribution Networks (CDN)
+        UDP-based file transfer
+
+The topic of measuring network throughput between network devices comes up quite frequently: It ranges from users claiming (and sometimes almost blaming) that the 100 Mbps Internet uplink in reality is only 10 Mbps to being surprised why they can’t transfer that multi-gigabyte file via FTP faster between data center locations.
+Let’s have a look behind the scenes of network throughput measurement and understand why users are often actually measuring something completely different, but also how to get more “performance” out of these connections.
+Sliding window protocolsPermalink
+
+Most user utilize software based on the Transmission Control Protocol (TCP) for measuring the network throughput. It is very important to keep in mind that TCP is a sliding window protocol.
+Figure 1: Sliding Window Protocol
+Figure 1: Sliding Window Protocol
+
+In order to guarantee reliable in-order delivery of packets, only a “window” of packets may be send without the receiver acknowledging them (See Figure 1). The size of this “window” is governed by the receiver and is referred to as the TCP Window Size. This way the receiver ensures that it can actually process the incoming data without “choking” on it.
+Figure 2: Sliding Window Protocol with increased t<sub>prop</sub>
+Figure 2: Sliding Window Protocol with increased tprop
+
+Looking at Figure 1 it should become clear that while increasing the value of the signal propagation time tprop, the amount of data that can be transferred in the same time period is reduced. This is caused by the sender spending more time waiting for acknowledgements, before it will send further packages. (See Figure 2)
+
+The propagation time tprop for a TCP packet can be determined by measuring the round-trip-time (RTT) of a packet. Here the round-trip-time is twice the propagation time for synchronous links. This can e.g. be done via the well known tool ping. The TCP window size is determined by the operating system. During a connection the receiver can also adapt the TCP Window Size - in both directions - if the situation changes due to packet loss or buffer fill levels.
+Bandwidth-delay Product and buffer sizePermalinkNow that we have identified the two most important variables for the performance of TCP based data transfers, let’s look at the math behind the sliding window concept:
+An important formula is the one for the Bandwidth-delay product (BDP), which is the product of a data link’s capacity (in bits per second) and its end-to-end delay (in seconds). The result, an amount of data measured in bits (or bytes), is equivalent to the maximum amount of data on the network circuit at any given time, e.g. data that has been transmitted but not yet acknowledged.
+Buffer(Mbit)=bandwidth(Mbit/s)×delay(s)
+
+The result of the BDP can also be interpreted as the required receiver TCP window size to maximize the performance on the data link.
+
+Let’s use an example:
+
+Round-Trip-Time between the US west coast (Las Vegas) and Europe (Germany): 173 ms Available bandwidth between the two sites: 100 Mbit/s
+173ms×100Mbit/s=0.173s×(100×1024×1024bit/s)=18140365bit=2.1625MByte
+This means that we would need a TCP Window Size of at least 2.1625 MByte to fully utilize the 100 Mbit/s link.
+We have seen, that in reality both the delay between sender and receiver as well as the TCP window size within the receiver are given. As we cannot change the laws of physics, the only value we can change is the TCP window size. Let’s shuffle the formula, to calculate the maximum bandwidth that can be achieved with a given RTT and TCP window size instead:
+bandwidth(Mbit/s)=Buffer(Mbit)delay(s)
+
+Let’s use another example:
+Round-Trip-Time between the US west coast (Las Vegas) and Europe (Germany): 173 ms Standard TCP windows size on a Linux (Ubuntu) host: 64 KByte
+64KByte173ms=(64×1024×8bit)0.173s=524288bit0.173s=3030566.47bit/s=2.89Mbit/s
+Irrelevant of the actual link speed between the two sites above we will not be able to transfer more than 2.89 Mbit/s with a single TCP stream. Keep in mind that this is the theoretical maximum. In reality the value will be even lower due to packet loss and packet header overhead.
+If you get tired of performing the math manually, have a look at the TCP throughput calculator from switch.ch.
