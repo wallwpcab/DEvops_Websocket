@@ -1,0 +1,76 @@
+Measuring Connection Throughput to Public Cloud
+
+There is probably a time when you need to test your connection throughput to the public cloud, for example when you want to measure if you already have enough bandwidth to have an on-premise and cloud connection.
+
+
+
+For this purpose, we can use iperf. Iperf can be used to measured TCP throughput, UDP jitter, and can also be used for bidirectional testing.
+
+Before we continue, there are few things that need to be considered:
+
+    Throughput on the public cloud also affected by your instance size. Small instance size tends to have a lower NIC throughput compared to the bigger instance.
+    Public cloud also offers TCP/UDP optimization service as well as caching service if you use HTTP-based application.
+    Public cloud bandwidth will rarely be the cause of low throughput. They have tons of resources in that area.
+
+With that in mind, let's try measuring throughput public cloud providers. We will use Google Cloud for example.
+On-site Preparation:
+
+Use one of your server or provision a new server for throughput testing. In this test, I use Ubuntu Server.
+
+Install iperf3:
+
+sudo apt remove iperf3 libiperf0sudo apt-get install libsctp1 wgetwget -c https://iperf.fr/download/ubuntu/libiperf0_3.9-1_amd64.debwget -c https://iperf.fr/download/ubuntu/iperf3_3.9-1_amd64.debsudo dpkg -i libiperf0_3.9–1_amd64.deb iperf3_3.9–1_amd64.deb
+
+Check your server public ip address:
+
+wget -qO- http://ipecho.net/plain | xargs echo
+
+We going to use this when permitting access to the public cloud firewall.
+
+After finishing iperf installation, you need to open TCP and UDP connection to port 5001 to the Internet on your data center firewall.
+Google Cloud Preparation:
+
+On the google cloud console, open your cloud shell so we can quickly run an instance. Choose the region closest to you.
+
+gcloud compute instances create iperf-instance --zone asia-southeast2-a --tags iperf
+
+This will create a new n1-standard-1 instance on your cloud with Debian image and tags: iperf
+
+Continue to open TCP and UDP port 5001 for iperf instance:
+
+gcloud compute firewall-rules create permit-iperf-5001 — direction=INGRESS — priority=1000 — action=ALLOW — rules=tcp:5001,udp:5001 — source-ranges=<your-public-ip-address>/32 — target-tags=iperf
+
+Replace <your-public-ip-address> with your public ip address from the on-site preparation step.
+
+From cloud shell, SSH to your instance:
+
+gcloud compute ssh iperf-instance — zone asia-southeast2-a
+
+If this is the first time you are doing SSH from a cloud shell, you need to generate an SSH key first. Answer Y to generate your SSH key and enter a passphrase.
+
+Install iperf3 on your cloud instance by doing the same installation as the previous step in the on-premises server.
+Run iperf
+
+Now, run iperf in server mode
+
+iperf3 -s -p 5001
+
+Run iperf3 as a client on your on-premises server:
+
+iperf3 -c 34.101.251.165 -p 5001
+
+TCP throughput to Google Cloud
+
+Next, let’s test UDP throughput and jitter to Google Cloud. Again from the on-premises server:
+
+iperf3 -c 34.101.251.165 -u -p 5001
+
+UDP throughput and jitter go Google Cloud
+
+You can see from both tests that I have around 25 Mbps TCP throughput to Google Cloud, and also near 0 ms Jitter which is quite impressive.
+
+With the same method as above, you can also test this with another public cloud.
+
+Now that we get our output, clear the resources that we have created:
+
+gcloud compute instances delete iperf-instance — zone asia-southeast2-agcloud compute firewall-rules delete permit-iperf
